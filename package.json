@@ -9,5 +9,8 @@
     "dev:backend": "cd backend && npm run dev",
     "seed": "cd backend && node seed.js",
     "build:frontend": "cd frontend && npm run build"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.6"
   }
 }
