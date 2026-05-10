@@ -1,5 +1,3 @@
-const PORT = process.env.PORT || 5001;
-
 require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
@@ -20,6 +18,7 @@ const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // ============================
 // Security Middleware
@@ -67,6 +66,19 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ============================
+// Root Route
+// ============================
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: '🚀 CREAVIX WORLD API is running!',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+  });
+});
+
+// ============================
 // API Routes
 // ============================
 app.use('/api/auth', authRoutes);
@@ -91,25 +103,23 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ============================
-
-// ============================
 // Start Server
 // ============================
 async function startServer() {
   try {
     await connectDB();
     const server = app.listen(PORT, () => {
-      console.log(`\n+--------------------------------------+`);
-      console.log(`�     CREAVIX WORLD API SERVER         �`);
-      console.log(`�--------------------------------------�`);
-      console.log(`�  ?? Running on port: ${PORT}             �`);
-      console.log(`�  ?? Environment: ${process.env.NODE_ENV}         �`);
-      console.log(`+--------------------------------------+\n`);
+      console.log(`\n╔══════════════════════════════════════╗`);
+      console.log(`║     CREAVIX WORLD API SERVER         ║`);
+      console.log(`╠══════════════════════════════════════╣`);
+      console.log(`║  🚀 Running on port: ${PORT}             ║`);
+      console.log(`║  🌍 Environment: ${process.env.NODE_ENV}         ║`);
+      console.log(`╚══════════════════════════════════════╝\n`);
     });
 
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.log(`Port ${PORT} is busy. Run: netstat -ano | findstr :${PORT}`);
+        console.log(`⚠️  Port ${PORT} busy — kill it with: netstat -ano | findstr :${PORT}`);
         process.exit(1);
       }
     });
@@ -121,4 +131,3 @@ async function startServer() {
 
 startServer();
 module.exports = app;
-
