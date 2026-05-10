@@ -11,17 +11,19 @@ const { signupValidation, loginValidation } = require('../middleware/validation'
 
 // Rate limiters
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 10,
   message: { success: false, message: 'Too many requests. Please wait 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false, // ✅ Add this
 });
 
 const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 5,
   message: { success: false, message: 'Too many OTP attempts. Wait 10 minutes.' },
+  validate: false, // ✅ Add this
 });
 
 router.post('/signup', authLimiter, signupValidation, signup);

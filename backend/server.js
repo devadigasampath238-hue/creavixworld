@@ -18,8 +18,8 @@ const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
+app.set('trust proxy', 1); // ← must be here
 const PORT = process.env.PORT || 5000;
-app.set('trust proxy', 1);
 // ============================
 // Security Middleware
 // ============================
