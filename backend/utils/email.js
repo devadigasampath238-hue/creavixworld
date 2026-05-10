@@ -1,34 +1,29 @@
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 const sendBrevoEmail = async ({ to, subject, html }) => {
   console.log('📧 Attempting to send email to:', to);
-  console.log('🔑 RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: 'CREAVIX WORLD <onboarding@resend.dev>',
-      to: [to],
-      subject,
-      html,
-    }),
+  const info = await transporter.sendMail({
+    from: `"CREAVIX WORLD" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html,
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('❌ Resend API Error:', JSON.stringify(data));
-    throw new Error(`Resend error: ${JSON.stringify(data)}`);
-  }
-
-  console.log('✅ Email sent successfully! ID:', data.id);
-  return data;
+  console.log('✅ Email sent:', info.messageId);
+  return info;
 };
 
 const sendOTPEmail = async (email, name, otp) => {
-  const html = `<div style="font-family:Arial;background:#030508;color:#e2e8f0;padding:40px;border-radius:12px;max-width:600px;margin:auto;border:1px solid rgba(0,212,255,0.2)"><h2 style="color:#00d4ff;font-family:monospace;letter-spacing:4px">CREAVIX.WORLD</h2><h3 style="color:#fff">Verify Your Email</h3><p>Hey <strong style="color:#00d4ff">${name}</strong>,</p><p>Your OTP code is:</p><div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:24px;text-align:center;margin:24px 0"><span style="font-family:monospace;font-size:40px;font-weight:900;color:#00d4ff;letter-spacing:12px">${otp}</span><p style="color:#475569;font-size:12px;margin-top:8px">Expires in 10 minutes</p></div><p style="color:#ff006e;font-size:12px">Never share this code. CREAVIX WORLD will never ask for your OTP.</p></div>`;
+  const html = `<div style="font-family:Arial;background:#030508;color:#e2e8f0;padding:40px;border-radius:12px;max-width:600px;margin:auto;border:1px solid rgba(0,212,255,0.2)"><h2 style="color:#00d4ff;font-family:monospace;letter-spacing:4px">CREAVIX.WORLD</h2><h3 style="color:#fff">Verify Your Email</h3><p>Hey <strong style="color:#00d4ff">${name}</strong>,</p><p>Your OTP code is:</p><div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:24px;text-align:center;margin:24px 0"><span style="font-family:monospace;font-size:40px;font-weight:900;color:#00d4ff;letter-spacing:12px">${otp}</span><p style="color:#475569;font-size:12px;margin-top:8px">Expires in 10 minutes</p></div><p style="color:#ff006e;font-size:12px">Never share this code.</p></div>`;
   await sendBrevoEmail({ to: email, subject: 'CREAVIX WORLD - Email Verification OTP', html });
 };
 
@@ -38,7 +33,7 @@ const sendWelcomeEmail = async (email, name) => {
 };
 
 const sendPasswordResetEmail = async (email, name, resetUrl) => {
-  const html = `<div style="font-family:Arial;background:#030508;color:#e2e8f0;padding:40px;border-radius:12px;max-width:600px;margin:auto;border:1px solid rgba(0,212,255,0.2)"><h2 style="color:#00d4ff;font-family:monospace;letter-spacing:4px">CREAVIX.WORLD</h2><h3 style="color:#fff">Reset Your Password</h3><p>Hey <strong style="color:#00d4ff">${name}</strong>,</p><p>Click below to reset your password. Link expires in 1 hour.</p><a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#00d4ff,#9d4edd);color:#000;font-weight:700;padding:14px 32px;border-radius:4px;text-decoration:none;margin-top:20px">Reset Password</a><p style="color:#ff006e;font-size:12px;margin-top:16px">Never share this link.</p></div>`;
+  const html = `<div style="font-family:Arial;background:#030508;color:#e2e8f0;padding:40px;border-radius:12px;max-width:600px;margin:auto;border:1px solid rgba(0,212,255,0.2)"><h2 style="color:#00d4ff;font-family:monospace;letter-spacing:4px">CREAVIX.WORLD</h2><h3 style="color:#fff">Reset Your Password</h3><p>Hey <strong style="color:#00d4ff">${name}</strong>,</p><p>Click below to reset your password. Link expires in 1 hour.</p><a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#00d4ff,#9d4edd);color:#000;font-weight:700;padding:14px 32px;border-radius:4px;text-decoration:none;margin-top:20px">Reset Password</a></div>`;
   await sendBrevoEmail({ to: email, subject: 'Password Reset - CREAVIX WORLD', html });
 };
 
