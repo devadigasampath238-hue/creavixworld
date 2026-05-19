@@ -37,7 +37,7 @@ export default function Signup() {
             <input
               {...register('name', { required: 'Name required', minLength: { value: 2, message: 'Min 2 chars' } })}
               type="text"
-              placeholder="John Doe"
+              placeholder=" John Doe"
               className="cyber-input pl-10"
             />
           </div>
