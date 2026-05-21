@@ -1,11 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="16" fill="#030508"/>
-  <rect x="4" y="4" width="92" height="92" rx="13" fill="none" stroke="#00d4ff" stroke-width="1.5" opacity="0.6"/>
-  <text x="50" y="68" font-family="monospace" font-weight="900" font-size="46" fill="#00d4ff" text-anchor="middle" filter="url(#glow)">CX</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <defs>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <!-- Blue gradient for C arc -->
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00CFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B6EFF;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Purple gradient for W -->
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7B4FFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D632C8;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Orbital ring gradient -->
+    <linearGradient id="ringGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" style="stop-color:#00CFFF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7B4FFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D632C8;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle drop shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#7B4FFF" flood-opacity="0.5"/>
     </filter>
   </defs>
+
+  <!-- Black background circle -->
+  <circle cx="50" cy="50" r="50" fill="#0A0A0F"/>
+
+  <!-- ── C arc (open on right, roughly 270°) ── -->
+  <!-- Bold arc from ~45° to ~315° leaving a gap on the right -->
+  <path
+    d="M 72,24
+       A 32,32 0 1,0 72,76"
+    fill="none"
+    stroke="url(#blueGrad)"
+    stroke-width="11"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
+
+  <!-- ── Orbital swoosh ring (ellipse, tilted) ── -->
+  <ellipse
+    cx="50" cy="53"
+    rx="38" ry="10"
+    fill="none"
+    stroke="url(#ringGrad)"
+    stroke-width="2.8"
+    stroke-linecap="round"
+    stroke-dasharray="62 58"
+    stroke-dashoffset="14"
+    transform="rotate(-12, 50, 53)"
+    filter="url(#glow)"
+  />
+
+  <!-- ── W lettermark ── -->
+  <!-- W: left leg down, up, down-center-point, up, right leg down -->
+  <polyline
+    points="29,36  36,61  44,44  50,61  57,44  64,61  71,36"
+    fill="none"
+    stroke="url(#purpleGrad)"
+    stroke-width="7.5"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+    filter="url(#shadow)"
+  />
+
+  <!-- ── 4-point sparkle star (top-right) ── -->
+  <!-- Vertical bar -->
+  <line x1="71" y1="17" x2="71" y2="27" stroke="#7DDEFF" stroke-width="2" stroke-linecap="round"/>
+  <!-- Horizontal bar -->
+  <line x1="66" y1="22" x2="76" y2="22" stroke="#7DDEFF" stroke-width="2" stroke-linecap="round"/>
+  <!-- Diagonal 1 -->
+  <line x1="67.5" y1="18.5" x2="74.5" y2="25.5" stroke="#7DDEFF" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Diagonal 2 -->
+  <line x1="74.5" y1="18.5" x2="67.5" y2="25.5" stroke="#7DDEFF" stroke-width="1.2" stroke-linecap="round"/>
 </svg>
