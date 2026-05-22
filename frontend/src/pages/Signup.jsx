@@ -33,12 +33,12 @@ export default function Signup() {
         <div>
           <label className="font-body text-xs text-slate-400 tracking-wider uppercase block mb-2">Full Name</label>
           <div className="relative">
-            <HiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-neon-blue/60" size={16} />
+            <HiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-blue/60 z-10 pointer-events-none" size={16} />
             <input
               {...register('name', { required: 'Name required', minLength: { value: 2, message: 'Min 2 chars' } })}
               type="text"
-              placeholder=" John Doe"
-              className="cyber-input pl-10"
+              placeholder="John Doe"
+              className="cyber-input pl-11"
             />
           </div>
           {errors.name && <p className="text-neon-pink text-xs mt-1">{errors.name.message}</p>}
@@ -47,12 +47,12 @@ export default function Signup() {
         <div>
           <label className="font-body text-xs text-slate-400 tracking-wider uppercase block mb-2">Email</label>
           <div className="relative">
-            <HiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-neon-blue/60" size={16} />
+            <HiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-blue/60 z-10 pointer-events-none" size={16} />
             <input
               {...register('email', { required: 'Email required', pattern: { value: /\S+@\S+\.\S+/, message: 'Invalid email' } })}
               type="email"
               placeholder="your@email.com"
-              className="cyber-input pl-10"
+              className="cyber-input pl-11"
             />
           </div>
           {errors.email && <p className="text-neon-pink text-xs mt-1">{errors.email.message}</p>}
@@ -61,14 +61,14 @@ export default function Signup() {
         <div>
           <label className="font-body text-xs text-slate-400 tracking-wider uppercase block mb-2">Password</label>
           <div className="relative">
-            <HiLockClosed className="absolute left-3 top-1/2 -translate-y-1/2 text-neon-blue/60" size={16} />
+            <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-blue/60 z-10 pointer-events-none" size={16} />
             <input
               {...register('password', { required: 'Password required', minLength: { value: 8, message: 'Min 8 characters' } })}
               type={showPw ? 'text' : 'password'}
               placeholder="Min 8 characters"
-              className="cyber-input pl-10 pr-10"
+              className="cyber-input pl-11 pr-11"
             />
-            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-neon-blue transition-colors">
+            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-neon-blue transition-colors z-10">
               {showPw ? <HiEyeOff size={16} /> : <HiEye size={16} />}
             </button>
           </div>
@@ -78,7 +78,7 @@ export default function Signup() {
         <div>
           <label className="font-body text-xs text-slate-400 tracking-wider uppercase block mb-2">Confirm Password</label>
           <div className="relative">
-            <HiLockClosed className="absolute left-3 top-1/2 -translate-y-1/2 text-neon-purple/60" size={16} />
+            <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-purple/60 z-10 pointer-events-none" size={16} />
             <input
               {...register('confirm', {
                 required: 'Please confirm password',
@@ -86,7 +86,7 @@ export default function Signup() {
               })}
               type="password"
               placeholder="Repeat password"
-              className="cyber-input pl-10"
+              className="cyber-input pl-11"
             />
           </div>
           {errors.confirm && <p className="text-neon-pink text-xs mt-1">{errors.confirm.message}</p>}
