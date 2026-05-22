@@ -10,7 +10,8 @@ import {
   RiGalleryLine, RiCloseLine
 } from 'react-icons/ri'
 import { format } from 'date-fns'
-
+import AdminChat from '../components/chat/AdminChat'
+import { RiMessage3Line } from 'react-icons/ri'
 const statusOptions = ['pending', 'under_review', 'in_progress', 'completed', 'delivered']
 const statusConfig = {
   pending: { label: 'Pending', cls: 'badge-pending' },
@@ -41,6 +42,7 @@ const adminLinks = [
   { key: 'projects', icon: RiProjectorLine, label: 'Projects' },
   { key: 'portfolio', icon: RiGalleryLine, label: 'Portfolio' },
   { key: 'users', icon: RiTeamLine, label: 'Users' },
+  { key: 'chat', icon: RiMessage3Line, label: 'Messages' },
 ]
 
 const emptyForm = { title: '', category: 'E-commerce', description: '', tags: '', color: '#00d4ff', liveUrl: '', imageUrl: '', featured: false, order: 0 }
@@ -387,6 +389,15 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
+              </motion.div>
+            )}
+            {/* CHAT */}
+            {activeTab === 'chat' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h2 className="font-display text-lg font-bold text-white mb-6">
+                  Messages <span className="text-neon-blue">— Admin Chat</span>
+                </h2>
+                <AdminChat />
               </motion.div>
             )}
           </>

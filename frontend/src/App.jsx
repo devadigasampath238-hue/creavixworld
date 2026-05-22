@@ -79,3 +79,7 @@ export default function App() {
     </BrowserRouter>
   )
 }
+import ChatWidget from './components/chat/ChatWidget'
+
+// Inside your return, before closing tag:
+<ChatWidget />
