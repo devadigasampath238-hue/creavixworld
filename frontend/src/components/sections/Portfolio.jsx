@@ -3,15 +3,112 @@ import { motion, useInView } from 'framer-motion'
 import { HiExternalLink } from 'react-icons/hi'
 import { api } from '../../context/AuthContext'
 
-// Auto screenshot from any live URL
-const getPreviewImage = (p) => {
-  if (p.imageUrl && !p.imageUrl.startsWith('http') === false && !p.imageUrl.includes(p.liveUrl?.split('/')[2])) {
-    return p.imageUrl
+// Auto screenshot services - tries each one as fallback
+const getScreenshotUrl = (liveUrl) => {
+  if (!liveUrl) return null
+  const encoded = encodeURIComponent(liveUrl)
+  // Primary: miniature.io (free, no key needed, fast)
+  return `https://mini.s-shot.ru/1024x768/JPEG/1024/Z100/?${liveUrl}`
+}
+
+function ProjectCard({ p, i, inView }) {
+  const [imgSrc, setImgSrc] = useState(
+    p.liveUrl ? `https://image.thum.io/get/width/600/crop/400/noanimate/${encodeURIComponent(p.liveUrl)}` : null
+  )
+  const [fallbackIndex, setFallbackIndex] = useState(0)
+
+  const fallbacks = p.liveUrl ? [
+    `https://image.thum.io/get/width/600/crop/400/noanimate/${encodeURIComponent(p.liveUrl)}`,
+    `https://api.microlink.io/?url=${encodeURIComponent(p.liveUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
+    `https://s.wordpress.com/mshots/v1/${encodeURIComponent(p.liveUrl)}?w=600&h=400`,
+  ] : []
+
+  const handleImgError = () => {
+    const next = fallbackIndex + 1
+    if (next < fallbacks.length) {
+      setFallbackIndex(next)
+      setImgSrc(fallbacks[next])
+    } else {
+      setImgSrc(null)
+    }
   }
-  if (p.liveUrl) {
-    return `https://api.screenshotmachine.com?key=demo&url=${encodeURIComponent(p.liveUrl)}&dimension=1024x768&format=jpg&cacheLimit=0`
-  }
-  return null
+
+  return (
+    <motion.div
+      key={p._id}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ delay: 0.1 + i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="group glass rounded-xl overflow-hidden hover:-translate-y-2 transition-all duration-400"
+      style={{ borderColor: `${p.color}20` }}
+    >
+      {/* Thumbnail */}
+      <div className="h-44 relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${p.color}10, rgba(3,5,8,0.9))` }}
+      >
+        {/* Fallback design (always behind) */}
+        <div className="absolute inset-0 cyber-grid opacity-30" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="font-display text-4xl font-black" style={{ color: p.color, opacity: 0.2 }}>
+            {p.title[0]}
+          </div>
+        </div>
+
+        {/* Auto screenshot on top */}
+        {imgSrc && (
+          <img
+            src={imgSrc}
+            alt={p.title}
+            onError={handleImgError}
+            className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          />
+        )}
+
+        {/* Window chrome dots */}
+        <div className="absolute top-3 left-3 flex gap-1.5 z-10">
+          <div className="w-2.5 h-2.5 rounded-full bg-neon-pink/80" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/80" />
+          <div className="w-2.5 h-2.5 rounded-full bg-neon-cyan/80" />
+        </div>
+
+        {/* Hover overlay with link */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-dark-900/60 z-10">
+          {p.liveUrl && (
+            <a
+              href={p.liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full border flex items-center justify-center backdrop-blur-sm"
+              style={{ borderColor: p.color, color: p.color, background: `${p.color}20` }}
+            >
+              <HiExternalLink size={18} />
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-display text-sm font-semibold text-white group-hover:text-neon-blue transition-colors">
+            {p.title}
+          </h3>
+          <span className="font-mono text-xs px-2 py-0.5 rounded"
+            style={{ color: p.color, background: `${p.color}15`, border: `1px solid ${p.color}30` }}>
+            {p.category}
+          </span>
+        </div>
+        <p className="font-body text-xs text-slate-400 mb-4 leading-relaxed">{p.description}</p>
+        <div className="flex flex-wrap gap-2">
+          {(p.tags || []).map(tag => (
+            <span key={tag} className="font-mono text-xs text-slate-500 px-2 py-0.5 rounded bg-dark-700/50 border border-slate-700/50">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  )
 }
 
 export default function Portfolio() {
@@ -85,87 +182,9 @@ export default function Portfolio() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {projects.map((p, i) => {
-              const previewUrl = p.liveUrl
-                ? `https://image.thum.io/get/width/600/crop/400/${encodeURIComponent(p.liveUrl)}`
-                : null
-
-              return (
-                <motion.div
-                  key={p._id}
-                  initial={{ opacity: 0, y: 40 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.1 + i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                  className="group glass rounded-xl overflow-hidden hover:-translate-y-2 transition-all duration-400"
-                  style={{ borderColor: `${p.color}20` }}
-                >
-                  {/* Preview */}
-                  <div className="h-44 relative overflow-hidden"
-                    style={{ background: `linear-gradient(135deg, ${p.color}10, rgba(3,5,8,0.9))` }}
-                  >
-                    {previewUrl && (
-                      <img
-                        src={previewUrl}
-                        alt={p.title}
-                        className="w-full h-full object-cover object-top"
-                        onError={e => { e.target.style.display = 'none' }}
-                      />
-                    )}
-
-                    {/* Fallback design shown behind image */}
-                    <div className="absolute inset-0 cyber-grid opacity-30 -z-10" />
-                    <div className="absolute inset-0 flex items-center justify-center -z-10">
-                      <div className="font-display text-2xl font-black" style={{ color: p.color, opacity: 0.3 }}>
-                        {p.title[0]}W
-                      </div>
-                    </div>
-
-                    {/* Window chrome */}
-                    <div className="absolute top-3 left-3 flex gap-1.5 z-10">
-                      <div className="w-2.5 h-2.5 rounded-full bg-neon-pink/60" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-neon-cyan/60" />
-                    </div>
-
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-dark-900/60 z-10">
-                      {p.liveUrl ? (
-                        <a href={p.liveUrl} target="_blank" rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full border flex items-center justify-center"
-                          style={{ borderColor: p.color, color: p.color }}>
-                          <HiExternalLink size={18} />
-                        </a>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full border flex items-center justify-center"
-                          style={{ borderColor: p.color, color: p.color }}>
-                          <HiExternalLink size={18} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-display text-sm font-semibold text-white group-hover:text-neon-blue transition-colors">
-                        {p.title}
-                      </h3>
-                      <span className="font-mono text-xs px-2 py-0.5 rounded"
-                        style={{ color: p.color, background: `${p.color}15`, border: `1px solid ${p.color}30` }}>
-                        {p.category}
-                      </span>
-                    </div>
-                    <p className="font-body text-xs text-slate-400 mb-4 leading-relaxed">{p.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(p.tags || []).map(tag => (
-                        <span key={tag} className="font-mono text-xs text-slate-500 px-2 py-0.5 rounded bg-dark-700/50 border border-slate-700/50">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
+            {projects.map((p, i) => (
+              <ProjectCard key={p._id} p={p} i={i} inView={inView} />
+            ))}
           </div>
         )}
       </div>
