@@ -12,9 +12,10 @@ export default function Portfolio() {
   useEffect(() => {
     api.get('/portfolio')
       .then(res => {
-        if (res.data.success && res.data.data?.items?.length > 0) {
-          setProjects(res.data.data.items)
-        }
+        const data = res.data
+        // handle both {data:{items:[]}} and {items:[]}
+        const items = data?.data?.items || data?.items || []
+        setProjects(items)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -57,7 +58,7 @@ export default function Portfolio() {
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="glass rounded-xl overflow-hidden animate-pulse">
                 <div className="h-44 bg-dark-700/50" />
                 <div className="p-5 space-y-3">
