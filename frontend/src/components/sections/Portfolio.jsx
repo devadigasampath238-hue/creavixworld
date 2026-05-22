@@ -3,6 +3,17 @@ import { motion, useInView } from 'framer-motion'
 import { HiExternalLink } from 'react-icons/hi'
 import { api } from '../../context/AuthContext'
 
+// Auto screenshot from any live URL
+const getPreviewImage = (p) => {
+  if (p.imageUrl && !p.imageUrl.startsWith('http') === false && !p.imageUrl.includes(p.liveUrl?.split('/')[2])) {
+    return p.imageUrl
+  }
+  if (p.liveUrl) {
+    return `https://api.screenshotmachine.com?key=demo&url=${encodeURIComponent(p.liveUrl)}&dimension=1024x768&format=jpg&cacheLimit=0`
+  }
+  return null
+}
+
 export default function Portfolio() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true })
@@ -13,7 +24,6 @@ export default function Portfolio() {
     api.get('/portfolio')
       .then(res => {
         const data = res.data
-        // handle both {data:{items:[]}} and {items:[]}
         const items = data?.data?.items || data?.items || []
         setProjects(items)
       })
@@ -75,72 +85,87 @@ export default function Portfolio() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {projects.map((p, i) => (
-              <motion.div
-                key={p._id}
-                initial={{ opacity: 0, y: 40 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.1 + i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="group glass rounded-xl overflow-hidden hover:-translate-y-2 transition-all duration-400"
-                style={{ borderColor: `${p.color}20` }}
-              >
-                <div className="h-44 relative overflow-hidden"
-                  style={{ background: p.imageUrl ? undefined : `linear-gradient(135deg, ${p.color}10, rgba(3,5,8,0.9))` }}
-                >
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <>
-                      <div className="absolute inset-0 cyber-grid opacity-30" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="font-display text-2xl font-black" style={{ color: p.color, opacity: 0.3 }}>
-                          {p.title[0]}W
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-neon-pink/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-neon-cyan/60" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-dark-900/50">
-                    {p.liveUrl ? (
-                      <a href={p.liveUrl} target="_blank" rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full border flex items-center justify-center"
-                        style={{ borderColor: p.color, color: p.color }}>
-                        <HiExternalLink size={18} />
-                      </a>
-                    ) : (
-                      <div className="w-10 h-10 rounded-full border flex items-center justify-center"
-                        style={{ borderColor: p.color, color: p.color }}>
-                        <HiExternalLink size={18} />
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {projects.map((p, i) => {
+              const previewUrl = p.liveUrl
+                ? `https://image.thum.io/get/width/600/crop/400/${encodeURIComponent(p.liveUrl)}`
+                : null
 
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-display text-sm font-semibold text-white group-hover:text-neon-blue transition-colors">
-                      {p.title}
-                    </h3>
-                    <span className="font-mono text-xs px-2 py-0.5 rounded"
-                      style={{ color: p.color, background: `${p.color}15`, border: `1px solid ${p.color}30` }}>
-                      {p.category}
-                    </span>
+              return (
+                <motion.div
+                  key={p._id}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.1 + i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                  className="group glass rounded-xl overflow-hidden hover:-translate-y-2 transition-all duration-400"
+                  style={{ borderColor: `${p.color}20` }}
+                >
+                  {/* Preview */}
+                  <div className="h-44 relative overflow-hidden"
+                    style={{ background: `linear-gradient(135deg, ${p.color}10, rgba(3,5,8,0.9))` }}
+                  >
+                    {previewUrl && (
+                      <img
+                        src={previewUrl}
+                        alt={p.title}
+                        className="w-full h-full object-cover object-top"
+                        onError={e => { e.target.style.display = 'none' }}
+                      />
+                    )}
+
+                    {/* Fallback design shown behind image */}
+                    <div className="absolute inset-0 cyber-grid opacity-30 -z-10" />
+                    <div className="absolute inset-0 flex items-center justify-center -z-10">
+                      <div className="font-display text-2xl font-black" style={{ color: p.color, opacity: 0.3 }}>
+                        {p.title[0]}W
+                      </div>
+                    </div>
+
+                    {/* Window chrome */}
+                    <div className="absolute top-3 left-3 flex gap-1.5 z-10">
+                      <div className="w-2.5 h-2.5 rounded-full bg-neon-pink/60" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-neon-cyan/60" />
+                    </div>
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-dark-900/60 z-10">
+                      {p.liveUrl ? (
+                        <a href={p.liveUrl} target="_blank" rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-full border flex items-center justify-center"
+                          style={{ borderColor: p.color, color: p.color }}>
+                          <HiExternalLink size={18} />
+                        </a>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full border flex items-center justify-center"
+                          style={{ borderColor: p.color, color: p.color }}>
+                          <HiExternalLink size={18} />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="font-body text-xs text-slate-400 mb-4 leading-relaxed">{p.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(p.tags || []).map(tag => (
-                      <span key={tag} className="font-mono text-xs text-slate-500 px-2 py-0.5 rounded bg-dark-700/50 border border-slate-700/50">
-                        {tag}
+
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-display text-sm font-semibold text-white group-hover:text-neon-blue transition-colors">
+                        {p.title}
+                      </h3>
+                      <span className="font-mono text-xs px-2 py-0.5 rounded"
+                        style={{ color: p.color, background: `${p.color}15`, border: `1px solid ${p.color}30` }}>
+                        {p.category}
                       </span>
-                    ))}
+                    </div>
+                    <p className="font-body text-xs text-slate-400 mb-4 leading-relaxed">{p.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(p.tags || []).map(tag => (
+                        <span key={tag} className="font-mono text-xs text-slate-500 px-2 py-0.5 rounded bg-dark-700/50 border border-slate-700/50">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </div>
         )}
       </div>
