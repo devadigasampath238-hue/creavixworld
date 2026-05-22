@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 const plans = [
   {
     name: 'Starter',
-    price: '$499',
+    price: '9999',
     period: 'one-time',
     desc: 'Perfect for small businesses and personal brands getting started online.',
     color: '#00d4ff',
@@ -24,7 +24,7 @@ const plans = [
   },
   {
     name: 'Business',
-    price: '$1,299',
+    price: '29999',
     period: 'one-time',
     desc: 'For growing businesses that need a powerful online presence with advanced features.',
     color: '#9d4edd',
@@ -44,7 +44,7 @@ const plans = [
   },
   {
     name: 'Premium',
-    price: '$2,999',
+    price: '49999',
     period: 'one-time',
     desc: 'Enterprise-grade solution for businesses demanding the absolute best.',
     color: '#ff006e',
