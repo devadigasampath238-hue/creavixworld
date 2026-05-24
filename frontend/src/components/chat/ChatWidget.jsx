@@ -1,21 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
 import { useAuth, api } from '../../context/AuthContext'
 import { RiMessage3Line, RiCloseLine, RiSendPlaneFill, RiCheckDoubleLine } from 'react-icons/ri'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format } from 'date-fns'
 
-let socketInstance = null
-
-const getSocket = (token) => {
-  if (!socketInstance || !socketInstance.connected) {
-    socketInstance = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', {
-      auth: { token },
-      transports: ['websocket'],
-    })
-  }
-  return socketInstance
-}
+const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'
 
 export default function ChatWidget() {
   const { user } = useAuth()
@@ -25,71 +15,72 @@ export default function ChatWidget() {
   const [adminId, setAdminId] = useState(null)
   const [typing, setTyping] = useState(false)
   const [unread, setUnread] = useState(0)
-  const [connected, setConnected] = useState(false)
+  const [status, setStatus] = useState('disconnected') // disconnected | connecting | connected
   const bottomRef = useRef(null)
   const socketRef = useRef(null)
   const typingTimer = useRef(null)
 
   useEffect(() => {
-    if (!user) return
+    if (!user || user.role === 'admin') return
+
     const token = localStorage.getItem('creavix_token')
-    const socket = getSocket(token)
+
+    // Get admin ID first
+    api.get('/auth/admin-id')
+      .then(res => { if (res.data.adminId) setAdminId(res.data.adminId) })
+      .catch(() => {})
+
+    // Connect socket with both transports (polling first, then upgrade to websocket)
+    setStatus('connecting')
+    const socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['polling', 'websocket'], // polling first for Render compatibility
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    })
     socketRef.current = socket
 
-    socket.on('connect', () => setConnected(true))
-    socket.on('disconnect', () => setConnected(false))
+    socket.on('connect', () => {
+      setStatus('connected')
+      // Load history after connect
+      api.get('/chat/history/admin')
+        .then(res => setMessages(res.data.messages || []))
+        .catch(() => {})
+    })
+
+    socket.on('disconnect', () => setStatus('disconnected'))
+    socket.on('connect_error', () => setStatus('disconnected'))
 
     socket.on('new_message', (msg) => {
-      setMessages(prev => {
-        if (prev.find(m => m._id === msg._id)) return prev
-        return [...prev, msg]
-      })
-      if (!open && msg.senderRole === 'admin') {
-        setUnread(u => u + 1)
-      }
+      setMessages(prev => prev.find(m => m._id === msg._id) ? prev : [...prev, msg])
+      if (!open && msg.senderRole === 'admin') setUnread(u => u + 1)
     })
 
-    socket.on('user_typing', ({ isTyping }) => {
-      setTyping(isTyping)
-    })
-
-    // Fetch history + admin id
-    api.get('/chat/history/admin').then(res => {
-      setMessages(res.data.messages || [])
-      // Get admin id from first admin message or fetch
-      const adminMsg = res.data.messages?.find(m => m.senderRole === 'admin')
-      if (adminMsg) setAdminId(adminMsg.senderId._id)
-    }).catch(() => {})
-
-    // Fetch admin id separately if needed
-    api.get('/auth/admin-id').then(res => {
-      if (res.data.adminId) setAdminId(res.data.adminId)
-    }).catch(() => {})
+    socket.on('user_typing', ({ isTyping }) => setTyping(isTyping))
 
     return () => {
-      socket.off('new_message')
-      socket.off('user_typing')
-      socket.off('connect')
-      socket.off('disconnect')
+      socket.disconnect()
+      socketRef.current = null
     }
   }, [user])
 
   useEffect(() => {
     if (open) {
       setUnread(0)
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     }
   }, [open, messages])
 
   const sendMessage = () => {
-    if (!input.trim() || !adminId || !socketRef.current) return
+    if (!input.trim() || !adminId || !socketRef.current || status !== 'connected') return
     socketRef.current.emit('send_message', { toUserId: adminId, message: input.trim() })
     setInput('')
   }
 
   const handleTyping = (e) => {
     setInput(e.target.value)
-    if (adminId && socketRef.current) {
+    if (adminId && socketRef.current && status === 'connected') {
       socketRef.current.emit('typing', { toUserId: adminId, isTyping: true })
       clearTimeout(typingTimer.current)
       typingTimer.current = setTimeout(() => {
@@ -100,6 +91,10 @@ export default function ChatWidget() {
 
   if (!user || user.role === 'admin') return null
 
+  const statusLabel = status === 'connected' ? 'Online' : status === 'connecting' ? 'Connecting...' : 'Offline'
+  const statusColor = status === 'connected' ? 'bg-green-400' : status === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-slate-500'
+  const canSend = input.trim().length > 0 && adminId && status === 'connected'
+
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <AnimatePresence>
@@ -109,12 +104,12 @@ export default function ChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-4 w-80 sm:w-96 glass rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-            style={{ height: '480px', border: '1px solid rgba(0,212,255,0.2)' }}
+            className="mb-4 w-80 sm:w-96 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            style={{ height: '480px', background: 'rgba(6,10,20,0.97)', border: '1px solid rgba(0,212,255,0.2)' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3"
-              style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(157,78,221,0.15))', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.12), rgba(157,78,221,0.12))', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -122,11 +117,11 @@ export default function ChatWidget() {
                     style={{ background: 'linear-gradient(135deg, #00d4ff, #9d4edd)' }}>
                     CX
                   </div>
-                  <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-dark-900 ${connected ? 'bg-green-400' : 'bg-slate-500'}`} />
+                  <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-dark-900 ${statusColor}`} />
                 </div>
                 <div>
                   <p className="font-display text-sm font-semibold text-white">CREAVIX Support</p>
-                  <p className="font-mono text-xs text-slate-400">{connected ? 'Online' : 'Connecting...'}</p>
+                  <p className="font-mono text-xs text-slate-400">{statusLabel}</p>
                 </div>
               </div>
               <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white transition-colors">
@@ -135,7 +130,7 @@ export default function ChatWidget() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: 'rgba(3,5,8,0.8)' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <RiMessage3Line size={32} className="mx-auto text-slate-600 mb-2" />
@@ -143,13 +138,13 @@ export default function ChatWidget() {
                 </div>
               )}
               {messages.map((msg) => {
-                const isMe = msg.senderId?._id === user._id || msg.senderId === user._id
+                const isMe = msg.senderRole === 'user'
                 return (
                   <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[75%] px-3 py-2 rounded-2xl ${isMe ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
                       style={isMe
-                        ? { background: 'linear-gradient(135deg, #00d4ff20, #9d4edd30)', border: '1px solid rgba(0,212,255,0.3)' }
-                        : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }
+                        ? { background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(157,78,221,0.2))', border: '1px solid rgba(0,212,255,0.3)' }
+                        : { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }
                       }
                     >
                       <p className="font-body text-xs text-white leading-relaxed">{msg.message}</p>
@@ -163,7 +158,7 @@ export default function ChatWidget() {
               })}
               {typing && (
                 <div className="flex justify-start">
-                  <div className="px-3 py-2 rounded-2xl rounded-bl-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="px-3 py-2 rounded-2xl rounded-bl-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>
                     <div className="flex gap-1 items-center h-4">
                       {[0,1,2].map(i => (
                         <span key={i} className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
@@ -177,19 +172,26 @@ export default function ChatWidget() {
 
             {/* Input */}
             <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(3,5,8,0.9)' }}>
+              {status !== 'connected' && (
+                <p className="font-mono text-[10px] text-yellow-400 text-center mb-2">
+                  {status === 'connecting' ? '⏳ Connecting to server...' : '🔴 Disconnected — retrying...'}
+                </p>
+              )}
               <div className="flex gap-2 items-center">
                 <input
                   value={input}
                   onChange={handleTyping}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-dark-800/80 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-neon-blue/50 transition-colors"
+                  placeholder={status === 'connected' ? 'Type a message...' : 'Waiting for connection...'}
+                  disabled={status !== 'connected'}
+                  className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors disabled:opacity-50"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim() || !adminId}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
-                  style={{ background: 'linear-gradient(135deg, #00d4ff, #9d4edd)' }}
+                  disabled={!canSend}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-30"
+                  style={{ background: canSend ? 'linear-gradient(135deg, #00d4ff, #9d4edd)' : 'rgba(255,255,255,0.1)' }}
                 >
                   <RiSendPlaneFill size={15} className="text-white" />
                 </button>
