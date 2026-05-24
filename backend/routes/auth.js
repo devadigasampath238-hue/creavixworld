@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
+const User = require('../models/User');
 
 const {
   signup, verifyOTP, resendOTP, login,
@@ -16,14 +17,14 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please wait 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: false, // ✅ Add this
+  validate: false,
 });
 
 const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 5,
   message: { success: false, message: 'Too many OTP attempts. Wait 10 minutes.' },
-  validate: false, // ✅ Add this
+  validate: false,
 });
 
 router.post('/signup', authLimiter, signupValidation, signup);
@@ -34,5 +35,16 @@ router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/reset-password', authLimiter, resetPassword);
+
+// GET /api/auth/admin-id — returns admin ID for chat
+router.get('/admin-id', async (req, res) => {
+  try {
+    const admin = await User.findOne({ role: 'admin' }).select('_id name');
+    if (!admin) return res.status(404).json({ success: false, message: 'Admin not found' });
+    res.json({ success: true, adminId: admin._id, adminName: admin.name });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;
