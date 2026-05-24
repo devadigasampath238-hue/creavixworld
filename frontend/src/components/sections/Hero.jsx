@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { HiArrowRight } from 'react-icons/hi'
 import { RiInstagramLine, RiMailLine } from 'react-icons/ri'
+import AITypingEffect from '../ui/AITypingEffect'
 
 const stagger = {
   hidden: {},
@@ -108,6 +109,9 @@ export default function Hero() {
               <span className="text-neon-purple font-medium">Cutting-edge tech</span> •{' '}
               <span className="text-neon-pink font-medium">Infinite impact</span>
             </motion.p>
+             <motion.div variants={fadeUp} className="mb-6">
+             <AITypingEffect />
+            </motion.div>
 
             {/* CTAs */}
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-12">

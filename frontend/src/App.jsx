@@ -1,39 +1,27 @@
-import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import ParticleBackground from './components/ui/ParticleBackground'
-import CursorGlow from './components/ui/CursorGlow'
-import ChatWidget from './components/chat/ChatWidget'
-import ScrollToTop from './components/ui/ScrollToTop'
+import NeuralBackground from './components/ui/NeuralBackground'
+import AIAssistant from './components/ui/AIAssistant'
 
-// Lazy load all pages for performance
-const Home = lazy(() => import('./pages/Home'))
-const Login = lazy(() => import('./pages/Login'))
-const Signup = lazy(() => import('./pages/Signup'))
-const VerifyOTP = lazy(() => import('./pages/VerifyOTP'))
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
-const ResetPassword = lazy(() => import('./pages/ResetPassword'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
-const SubmitProject = lazy(() => import('./pages/SubmitProject'))
-const NotFound = lazy(() => import('./pages/NotFound'))
-
-// Page loader fallback
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-900">
-      <div className="flex flex-col items-center gap-4">
-        <div className="cyber-loader" />
-        <p className="font-mono text-xs text-neon-blue/60 tracking-widest animate-pulse">LOADING...</p>
-      </div>
-    </div>
-  )
-}
+// Pages
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import VerifyOTP from './pages/VerifyOTP'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import Dashboard from './pages/Dashboard'
+import AdminDashboard from './pages/AdminDashboard'
+import SubmitProject from './pages/SubmitProject'
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
-  if (loading) return <PageLoader />
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-dark-900">
+      <div className="cyber-loader" />
+    </div>
+  )
   if (!user) return <Navigate to="/login" replace />
   if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" replace />
   return children
@@ -49,39 +37,41 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <>
-      <CursorGlow />
-      <ParticleBackground />
+      {/* Neural network background on all pages */}
+      <NeuralBackground />
+
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'rgba(13, 19, 33, 0.95)',
-            border: '1px solid rgba(0, 212, 255, 0.3)',
+            background: 'rgba(6,10,20,0.97)',
+            border: '1px solid rgba(0,212,255,0.25)',
             color: '#e2e8f0',
             fontFamily: '"Exo 2", sans-serif',
             fontSize: '14px',
+            backdropFilter: 'blur(20px)',
           },
-          success: { iconTheme: { primary: '#00d4ff', secondary: '#030508' } },
-          error: { iconTheme: { primary: '#ff006e', secondary: '#030508' } },
+          success: { iconTheme: { primary: '#00d4ff', secondary: '#020408' } },
+          error: { iconTheme: { primary: '#ff006e', secondary: '#020408' } },
         }}
       />
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-      <ChatWidget />
-      <ScrollToTop />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {/* AI Assistant floats on every page */}
+      <AIAssistant />
     </>
   )
 }
