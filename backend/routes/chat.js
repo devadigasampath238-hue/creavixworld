@@ -26,7 +26,7 @@ router.get('/history/:userId', protect, async (req, res) => {
   }
 });
 
-// POST /api/chat/send — REST fallback when socket disconnected
+// POST /api/chat/send — REST fallback
 router.post('/send', protect, async (req, res) => {
   try {
     const { toUserId, message } = req.body;
@@ -48,7 +48,6 @@ router.post('/send', protect, async (req, res) => {
 
     const populated = await msg.populate('senderId', 'name avatar role');
 
-    // Also emit via socket if available
     const io = req.app.get('io');
     if (io) io.to(toUserId).emit('new_message', populated);
 
@@ -59,31 +58,46 @@ router.post('/send', protect, async (req, res) => {
 });
 
 // GET /api/chat/conversations — admin only
+// Using simple query instead of aggregate to avoid errors
 router.get('/conversations', protect, adminOnly, async (req, res) => {
   try {
-    const conversations = await ChatMessage.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: '$conversationId',
-          lastMessage: { $first: '$$ROOT' },
-          unreadCount: {
-            $sum: {
-              $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$read', false] }] }, 1, 0]
-            }
-          }
-        }
-      },
-      { $sort: { 'lastMessage.createdAt': -1 } }
-    ]);
+    // Get all messages grouped by conversationId simply
+    const allMessages = await ChatMessage.find()
+      .sort({ createdAt: -1 })
+      .populate('senderId', 'name email avatar role')
+      .limit(500);
 
-    const populated = await Promise.all(conversations.map(async (conv) => {
-      const userId = conv._id.split('_')[0];
-      const user = await User.findById(userId).select('name email avatar');
-      return { ...conv, user };
-    }));
+    // Group by conversationId manually
+    const convMap = {};
+    for (const msg of allMessages) {
+      if (!convMap[msg.conversationId]) {
+        convMap[msg.conversationId] = {
+          _id: msg.conversationId,
+          lastMessage: msg,
+          unreadCount: 0,
+          user: null,
+        };
+      }
+      if (msg.senderRole === 'user' && !msg.read) {
+        convMap[msg.conversationId].unreadCount++;
+      }
+    }
 
-    return sendSuccess(res, { conversations: populated });
+    // Populate user info for each conversation
+    const conversations = await Promise.all(
+      Object.values(convMap).map(async (conv) => {
+        const userId = conv._id.split('_')[0];
+        const user = await User.findById(userId).select('name email avatar');
+        return { ...conv, user };
+      })
+    );
+
+    // Sort by latest message
+    conversations.sort((a, b) =>
+      new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt)
+    );
+
+    return sendSuccess(res, { conversations });
   } catch (err) {
     return sendError(res, err.message, 500);
   }
