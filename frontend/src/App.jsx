@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ParticleBackground from './components/ui/ParticleBackground'
 import CursorGlow from './components/ui/CursorGlow'
+import ChatWidget from './components/chat/ChatWidget'
 
 // Pages
 import Home from './pages/Home'
@@ -14,7 +15,6 @@ import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SubmitProject from './pages/SubmitProject'
-import ChatWidget from './components/chat/ChatWidget'
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
@@ -66,9 +66,8 @@ function AppRoutes() {
         <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="/" element={<Home />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ChatWidget />
     </>
   )
 }
@@ -82,7 +81,3 @@ export default function App() {
     </BrowserRouter>
   )
 }
-import ChatWidget from './components/chat/ChatWidget'
-
-// Inside your return, before closing tag:
-<ChatWidget />
