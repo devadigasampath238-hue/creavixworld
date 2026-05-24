@@ -1,28 +1,39 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ParticleBackground from './components/ui/ParticleBackground'
 import CursorGlow from './components/ui/CursorGlow'
 import ChatWidget from './components/chat/ChatWidget'
+import ScrollToTop from './components/ui/ScrollToTop'
 
-// Pages
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
-import VerifyOTP from './pages/VerifyOTP'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import Dashboard from './pages/Dashboard'
-import AdminDashboard from './pages/AdminDashboard'
-import SubmitProject from './pages/SubmitProject'
+// Lazy load all pages for performance
+const Home = lazy(() => import('./pages/Home'))
+const Login = lazy(() => import('./pages/Login'))
+const Signup = lazy(() => import('./pages/Signup'))
+const VerifyOTP = lazy(() => import('./pages/VerifyOTP'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const SubmitProject = lazy(() => import('./pages/SubmitProject'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+// Page loader fallback
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-dark-900">
+      <div className="flex flex-col items-center gap-4">
+        <div className="cyber-loader" />
+        <p className="font-mono text-xs text-neon-blue/60 tracking-widest animate-pulse">LOADING...</p>
+      </div>
+    </div>
+  )
+}
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-900">
-      <div className="cyber-loader" />
-    </div>
-  )
+  if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
   if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" replace />
   return children
@@ -55,19 +66,22 @@ function AppRoutes() {
           error: { iconTheme: { primary: '#ff006e', secondary: '#030508' } },
         }}
       />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
       <ChatWidget />
+      <ScrollToTop />
     </>
   )
 }
