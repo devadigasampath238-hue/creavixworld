@@ -15,7 +15,7 @@ export default function ChatWidget() {
   const [adminId, setAdminId] = useState(null)
   const [typing, setTyping] = useState(false)
   const [unread, setUnread] = useState(0)
-  const [status, setStatus] = useState('disconnected') // disconnected | connecting | connected
+  const [status, setStatus] = useState('disconnected')
   const bottomRef = useRef(null)
   const socketRef = useRef(null)
   const typingTimer = useRef(null)
@@ -25,32 +25,48 @@ export default function ChatWidget() {
 
     const token = localStorage.getItem('creavix_token')
 
-    // Get admin ID first
+    // Get admin ID
     api.get('/auth/admin-id')
       .then(res => { if (res.data.adminId) setAdminId(res.data.adminId) })
       .catch(() => {})
 
-    // Connect socket with both transports (polling first, then upgrade to websocket)
+    // Load history via REST (no socket needed)
+    api.get('/chat/history/admin')
+      .then(res => setMessages(res.data.messages || []))
+      .catch(() => {})
+
     setStatus('connecting')
+
     const socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['polling', 'websocket'], // polling first for Render compatibility
+      transports: ['polling', 'websocket'], // polling first — works on Render free tier
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 10000,
+      timeout: 20000,
     })
+
     socketRef.current = socket
 
     socket.on('connect', () => {
+      console.log('✅ Socket connected via', socket.io.engine.transport.name)
       setStatus('connected')
-      // Load history after connect
-      api.get('/chat/history/admin')
-        .then(res => setMessages(res.data.messages || []))
-        .catch(() => {})
     })
 
-    socket.on('disconnect', () => setStatus('disconnected'))
-    socket.on('connect_error', () => setStatus('disconnected'))
+    socket.on('disconnect', (reason) => {
+      console.log('❌ Socket disconnected:', reason)
+      setStatus('disconnected')
+    })
+
+    socket.on('connect_error', (err) => {
+      console.log('⚠️ Socket error:', err.message)
+      setStatus('disconnected')
+    })
+
+    socket.on('reconnect', () => {
+      setStatus('connected')
+    })
 
     socket.on('new_message', (msg) => {
       setMessages(prev => prev.find(m => m._id === msg._id) ? prev : [...prev, msg])
@@ -73,14 +89,29 @@ export default function ChatWidget() {
   }, [open, messages])
 
   const sendMessage = () => {
-    if (!input.trim() || !adminId || !socketRef.current || status !== 'connected') return
-    socketRef.current.emit('send_message', { toUserId: adminId, message: input.trim() })
+    if (!input.trim() || !adminId) return
+
+    if (socketRef.current?.connected) {
+      // Real-time via socket
+      socketRef.current.emit('send_message', { toUserId: adminId, message: input.trim() })
+    } else {
+      // Fallback: save via REST and show optimistically
+      const optimistic = {
+        _id: Date.now().toString(),
+        message: input.trim(),
+        senderRole: 'user',
+        senderId: { _id: user._id },
+        createdAt: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, optimistic])
+      api.post('/chat/send', { toUserId: adminId, message: input.trim() }).catch(() => {})
+    }
     setInput('')
   }
 
   const handleTyping = (e) => {
     setInput(e.target.value)
-    if (adminId && socketRef.current && status === 'connected') {
+    if (adminId && socketRef.current?.connected) {
       socketRef.current.emit('typing', { toUserId: adminId, isTyping: true })
       clearTimeout(typingTimer.current)
       typingTimer.current = setTimeout(() => {
@@ -91,9 +122,9 @@ export default function ChatWidget() {
 
   if (!user || user.role === 'admin') return null
 
-  const statusLabel = status === 'connected' ? 'Online' : status === 'connecting' ? 'Connecting...' : 'Offline'
-  const statusColor = status === 'connected' ? 'bg-green-400' : status === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-slate-500'
-  const canSend = input.trim().length > 0 && adminId && status === 'connected'
+  const canSend = input.trim().length > 0 && adminId
+  const statusLabel = status === 'connected' ? 'Online' : status === 'connecting' ? 'Connecting...' : 'Offline — messages saved'
+  const statusColor = status === 'connected' ? 'bg-green-400' : status === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -134,7 +165,7 @@ export default function ChatWidget() {
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <RiMessage3Line size={32} className="mx-auto text-slate-600 mb-2" />
-                  <p className="font-body text-xs text-slate-500">Send a message to start chatting with our team!</p>
+                  <p className="font-body text-xs text-slate-500">Send a message to start chatting!</p>
                 </div>
               )}
               {messages.map((msg) => {
@@ -172,19 +203,13 @@ export default function ChatWidget() {
 
             {/* Input */}
             <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(3,5,8,0.9)' }}>
-              {status !== 'connected' && (
-                <p className="font-mono text-[10px] text-yellow-400 text-center mb-2">
-                  {status === 'connecting' ? '⏳ Connecting to server...' : '🔴 Disconnected — retrying...'}
-                </p>
-              )}
               <div className="flex gap-2 items-center">
                 <input
                   value={input}
                   onChange={handleTyping}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder={status === 'connected' ? 'Type a message...' : 'Waiting for connection...'}
-                  disabled={status !== 'connected'}
-                  className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors disabled:opacity-50"
+                  placeholder="Type a message..."
+                  className="flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                 />
                 <button

@@ -27,37 +27,45 @@ const chatRoutes = require('./routes/chat');
 const app = express();
 const server = http.createServer(app);
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      'http://localhost:5174',
-    ],
+    origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
     credentials: true,
     methods: ['GET', 'POST'],
   },
+  // Render-compatible settings
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  upgradeTimeout: 30000,
+  allowUpgrades: true,
+  cookie: false,
 });
 
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:5174',
-  ],
+  origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 app.use(rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
   max: parseInt(process.env.RATE_LIMIT_MAX || '100'),
   message: { success: false, message: 'Too many requests. Try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -66,7 +74,13 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
-  res.json({ success: true, message: '🚀 CREAVIX WORLD API is running!', version: '1.0.0', timestamp: new Date().toISOString(), environment: process.env.NODE_ENV });
+  res.json({
+    success: true,
+    message: '🚀 CREAVIX WORLD API is running!',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+  });
 });
 
 app.use('/api/auth', authRoutes);
@@ -77,54 +91,53 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/chat', chatRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: '🚀 CREAVIX WORLD API is running!', timestamp: new Date().toISOString(), environment: process.env.NODE_ENV });
+  res.json({
+    success: true,
+    message: '🚀 CREAVIX WORLD API is running!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+  });
 });
 
 app.use(notFound);
 app.use(errorHandler);
 
 // ============================
-// Socket.io — Real-time Chat
+// Socket.io Auth Middleware
 // ============================
-// Map: userId -> socketId
-const onlineUsers = new Map();
-
 io.use(async (socket, next) => {
   try {
-    const token = socket.handshake.auth.token;
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace('Bearer ', '');
     if (!token) return next(new Error('No token'));
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
     if (!user) return next(new Error('User not found'));
     socket.user = user;
     next();
-  } catch {
+  } catch (err) {
     next(new Error('Invalid token'));
   }
 });
+
+// ============================
+// Socket.io Events
+// ============================
+const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
   const userId = socket.user._id.toString();
   const role = socket.user.role;
 
   onlineUsers.set(userId, socket.id);
-  console.log(`🟢 ${socket.user.name} (${role}) connected`);
-
-  // Join their personal room
   socket.join(userId);
-
-  // Admin joins admin room
   if (role === 'admin') socket.join('admin');
 
-  // Broadcast online status
   io.emit('user_online', { userId, online: true });
+  console.log(`🟢 ${socket.user.name} (${role}) connected via ${socket.conn.transport.name}`);
 
-  // Send message
   socket.on('send_message', async ({ toUserId, message }) => {
     try {
       if (!message?.trim()) return;
-
-      // conversationId is always: userId_adminId (sorted so it's consistent)
       const adminId = role === 'admin' ? userId : toUserId;
       const regularUserId = role === 'user' ? userId : toUserId;
       const conversationId = `${regularUserId}_${adminId}`;
@@ -137,40 +150,33 @@ io.on('connection', (socket) => {
       });
 
       const populated = await msg.populate('senderId', 'name avatar role');
-
-      // Send to recipient
       io.to(toUserId).emit('new_message', populated);
-      // Send back to sender (confirmation)
       socket.emit('new_message', populated);
     } catch (err) {
-      socket.emit('error', { message: 'Failed to send message' });
+      socket.emit('chat_error', { message: 'Failed to send message' });
     }
   });
 
-  // Mark messages as read
   socket.on('mark_read', async ({ conversationId }) => {
     try {
       await ChatMessage.updateMany(
         { conversationId, senderId: { $ne: socket.user._id }, read: false },
         { read: true }
       );
-      socket.emit('messages_read', { conversationId });
     } catch {}
   });
 
-  // Typing indicator
   socket.on('typing', ({ toUserId, isTyping }) => {
     io.to(toUserId).emit('user_typing', { fromUserId: userId, isTyping });
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     onlineUsers.delete(userId);
     io.emit('user_online', { userId, online: false });
-    console.log(`🔴 ${socket.user.name} disconnected`);
+    console.log(`🔴 ${socket.user.name} disconnected: ${reason}`);
   });
 });
 
-// Make io accessible in routes
 app.set('io', io);
 
 // ============================
@@ -187,7 +193,6 @@ async function startServer() {
       console.log(`║  🌍 Environment: ${process.env.NODE_ENV}         ║`);
       console.log(`╚══════════════════════════════════════╝\n`);
     });
-
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         console.log(`⚠️  Port ${PORT} busy`);
