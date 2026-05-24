@@ -63,13 +63,5 @@ const generateJWT = (userId) => {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };
-router.get('/admin-id', async (req, res) => {
-  try {
-    const admin = await User.findOne({ role: 'admin' }).select('_id name');
-    if (!admin) return res.status(404).json({ success: false, message: 'Admin not found' });
-    res.json({ success: true, adminId: admin._id, adminName: admin.name });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+
 module.exports = { protect, adminOnly, verifiedOnly, generateJWT };
