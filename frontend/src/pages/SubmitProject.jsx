@@ -121,22 +121,17 @@ export default function SubmitProject() {
             </div>
 
             {/* Deadline */}
-            <div>
-              <label className="font-body text-xs text-slate-400 uppercase tracking-wider block mb-2">Desired Deadline</label>
-              <input {...register('deadline')} type="date" className="cyber-input" style={{ colorScheme: 'dark' }} />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="font-body text-xs text-slate-400 uppercase tracking-wider block mb-2">Project Description *</label>
-              <textarea
-                {...register('description', { required: 'Required', minLength: { value: 30, message: 'Min 30 characters' } })}
-                rows={5}
-                className="cyber-input resize-none"
-                placeholder="Describe your project in detail — goals, target audience, features, inspiration..."
-              />
-              {errors.description && <p className="text-neon-pink text-xs mt-1">{errors.description.message}</p>}
-            </div>
+            {/* Deadline */}
+<div>
+  <label className="font-body text-xs text-slate-400 uppercase tracking-wider block mb-2">Desired Deadline</label>
+  <input
+    {...register('deadline')}
+    type="date"
+    className="cyber-input"
+    style={{ colorScheme: 'dark' }}
+    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+  />
+</div>
 
             {/* Additional notes */}
             <div>

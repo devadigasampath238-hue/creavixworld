@@ -225,15 +225,16 @@ export default function Dashboard() {
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
+            <div className="mt-6">
+            <h3 className="font-display text-sm font-semibold text-white mb-4">Member Card</h3>
+            <PrintCard user={user} />
+            </div>
           </motion.div>
         )}
        
 
-// Inside profile tab section:
-<div className="mt-6">
-  <h3 className="font-display text-sm font-semibold text-white mb-4">Member Card</h3>
-  <PrintCard user={user} />
-</div>
+
+
 
         {/* Notifications tab */}
         {activeTab === 'notifications' && (
