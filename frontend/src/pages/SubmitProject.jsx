@@ -6,6 +6,8 @@ import { useDropzone } from 'react-dropzone'
 import toast from 'react-hot-toast'
 import { HiCloudUpload, HiArrowLeft } from 'react-icons/hi'
 import { api } from '../context/AuthContext'
+import { getTodayString } from '../utils/dateUtils'
+
 
 const projectTypes = ['Business Website', 'Portfolio Website', 'E-commerce Store', 'Admin Dashboard', 'Custom Web App', 'UI/UX Design', 'Branding', 'Landing Page', 'Other']
 const budgets = ['Under $500', '$500 - $1,000', '$1,000 - $2,500', '$2,500 - $5,000', '$5,000+', 'Let\'s Discuss']
@@ -40,6 +42,10 @@ export default function SubmitProject() {
       setLoading(false)
     }
   }
+   
+  <input {...register('deadline')} type="date" 
+     min={getTodayString()}
+  className="cyber-input" style={{ colorScheme: 'dark' }} />
 
   return (
     <div className="min-h-screen bg-dark-900 py-12 px-4 sm:px-6">

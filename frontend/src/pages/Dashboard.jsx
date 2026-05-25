@@ -5,6 +5,7 @@ import DashSidebar from '../components/dashboard/DashSidebar'
 import { RiProjectorLine, RiCheckLine, RiTimeLine, RiBellLine, RiMenuLine } from 'react-icons/ri'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import PrintCard from '../components/dashboard/PrintCard'
 
 const statusConfig = {
   pending: { label: 'Pending', cls: 'badge-pending' },
@@ -226,6 +227,13 @@ export default function Dashboard() {
             </div>
           </motion.div>
         )}
+       
+
+// Inside profile tab section:
+<div className="mt-6">
+  <h3 className="font-display text-sm font-semibold text-white mb-4">Member Card</h3>
+  <PrintCard user={user} />
+</div>
 
         {/* Notifications tab */}
         {activeTab === 'notifications' && (
