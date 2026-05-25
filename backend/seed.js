@@ -7,7 +7,7 @@ const seed = async () => {
   await connectDB();
 
   const email = process.env.ADMIN_EMAIL || 'admin@creavixworld.com';
-  const password = process.env.ADMIN_PASSWORD || 'Admin@Creavix2024!';
+  const password = process.env.ADMIN_PASSWORD || 'Admin@123';
   const name = 'CREAVIX Admin';
 
   try {

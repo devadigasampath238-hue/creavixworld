@@ -131,7 +131,7 @@ EMAIL_PASS=your_gmail_app_password
 EMAIL_FROM=CREAVIX WORLD <teamcreavixworld.org@gmail.com>
 FRONTEND_URL=http://localhost:5173
 ADMIN_EMAIL=admin@creavixworld.com
-ADMIN_PASSWORD=Admin@Creavix2024!
+ADMIN_PASSWORD=Admin@123
 ```
 
 > **Gmail App Password:** Go to Google Account → Security → 2-Step Verification → App Passwords → Generate
