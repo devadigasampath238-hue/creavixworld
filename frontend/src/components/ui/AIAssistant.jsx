@@ -73,13 +73,21 @@ export default function AIAssistant() {
 
   return (
     <>
-      {/* Floating button - positioned at bottom right */}
-      <div className="fixed bottom-6 right-6 z-[9999]">
+      {/* Floating button — bottom right, highest z-index */}
+      <div className="fixed bottom-6 right-6" style={{ zIndex: 9999 }}>
         <AnimatePresence>
           {pulse && !open && (
-            <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-              className="absolute -top-10 right-0 bg-dark-800 border border-neon-blue/30 text-neon-blue text-xs font-mono px-3 py-1.5 rounded-lg whitespace-nowrap"
-              style={{ boxShadow: '0 0 15px rgba(0,212,255,0.2)' }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute -top-10 right-0 text-xs font-mono px-3 py-1.5 rounded-lg whitespace-nowrap"
+              style={{
+                background: 'rgba(6,10,20,0.97)',
+                border: '1px solid rgba(0,212,255,0.3)',
+                color: '#00d4ff',
+                boxShadow: '0 0 15px rgba(0,212,255,0.2)',
+              }}>
               Ask CREAVIX AI ✨
             </motion.div>
           )}
@@ -88,8 +96,10 @@ export default function AIAssistant() {
         {/* Pulse rings */}
         {!open && (
           <>
-            <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: '#00d4ff' }} />
-            <div className="absolute -inset-2 rounded-full animate-pulse opacity-10" style={{ background: '#00d4ff' }} />
+            <div className="absolute inset-0 rounded-full animate-ping opacity-20"
+              style={{ background: '#00d4ff' }} />
+            <div className="absolute -inset-2 rounded-full animate-pulse opacity-10"
+              style={{ background: '#00d4ff' }} />
           </>
         )}
 
@@ -97,22 +107,27 @@ export default function AIAssistant() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen(!open)}
-          className="relative w-14 h-14 rounded-full flex items-center justify-center text-white font-bold z-10"
+          className="relative w-14 h-14 rounded-full flex items-center justify-center text-white font-bold"
           style={{
             background: 'linear-gradient(135deg, #00b8d9, #7b2fff)',
             boxShadow: '0 0 25px rgba(0,212,255,0.4), 0 0 50px rgba(123,47,255,0.2)',
+            zIndex: 9999,
           }}
         >
           <AnimatePresence mode="wait">
             {open
-              ? <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}><RiCloseLine size={24} /></motion.div>
-              : <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}><RiRobot2Line size={24} /></motion.div>
+              ? <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                  <RiCloseLine size={24} />
+                </motion.div>
+              : <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                  <RiRobot2Line size={24} />
+                </motion.div>
             }
           </AnimatePresence>
         </motion.button>
       </div>
 
-      {/* Chat window */}
+      {/* Chat window — sits above the button */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -120,17 +135,26 @@ export default function AIAssistant() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed bottom-24 right-6 z-[9998] w-80 sm:w-96 rounded-2xl overflow-hidden"
             style={{
+              position: 'fixed',
+              bottom: '90px',
+              right: '24px',
+              zIndex: 9998,
+              width: '340px',
+              maxWidth: 'calc(100vw - 48px)',
               background: 'rgba(6,10,20,0.97)',
               border: '1px solid rgba(0,212,255,0.2)',
+              borderRadius: '16px',
+              overflow: 'hidden',
               boxShadow: '0 0 40px rgba(0,212,255,0.1), 0 20px 60px rgba(0,0,0,0.6)',
             }}
           >
             {/* Header */}
-            <div className="p-4 border-b border-neon-blue/10" style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.08), rgba(123,47,255,0.08))' }}>
+            <div className="p-4 border-b border-neon-blue/10"
+              style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.08), rgba(123,47,255,0.08))' }}>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #00b8d9, #7b2fff)' }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #00b8d9, #7b2fff)' }}>
                   <RiRobot2Line size={18} className="text-white" />
                 </div>
                 <div>
@@ -145,14 +169,12 @@ export default function AIAssistant() {
             </div>
 
             {/* Messages */}
-            <div className="h-72 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
+            <div className="overflow-y-auto p-4 space-y-3" style={{ height: '280px', scrollbarWidth: 'thin' }}>
               {messages.map((m, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] px-3 py-2 rounded-xl text-xs font-body leading-relaxed whitespace-pre-line ${
-                    m.from === 'user'
-                      ? 'text-white rounded-br-none'
-                      : 'text-slate-200 rounded-bl-none'
+                    m.from === 'user' ? 'text-white rounded-br-none' : 'text-slate-200 rounded-bl-none'
                   }`} style={m.from === 'user'
                     ? { background: 'linear-gradient(135deg, #00b8d9, #7b2fff)' }
                     : { background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.15)' }
@@ -163,7 +185,8 @@ export default function AIAssistant() {
               ))}
               {typing && (
                 <div className="flex justify-start">
-                  <div className="rounded-xl rounded-bl-none" style={{ background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.15)' }}>
+                  <div className="rounded-xl rounded-bl-none"
+                    style={{ background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.15)' }}>
                     <TypingDots />
                   </div>
                 </div>
@@ -191,7 +214,11 @@ export default function AIAssistant() {
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendMessage()}
                   placeholder="Ask anything..."
-                  className="flex-1 bg-dark-800 border border-neon-blue/15 text-white text-xs font-body rounded-lg px-3 py-2 outline-none focus:border-neon-blue/40 placeholder-slate-600"
+                  className="flex-1 text-white text-xs font-body rounded-lg px-3 py-2 outline-none placeholder-slate-600"
+                  style={{
+                    background: 'rgba(10,16,32,0.8)',
+                    border: '1px solid rgba(0,212,255,0.15)',
+                  }}
                 />
                 <motion.button whileTap={{ scale: 0.9 }} onClick={() => sendMessage()}
                   className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
