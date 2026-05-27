@@ -74,7 +74,7 @@ export default function AIAssistant() {
   return (
     <>
       {/* Floating button - positioned at bottom right */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-[9999]">
         <AnimatePresence>
           {pulse && !open && (
             <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
@@ -120,7 +120,7 @@ export default function AIAssistant() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-2xl overflow-hidden"
+            className="fixed bottom-24 right-6 z-[9998] w-80 sm:w-96 rounded-2xl overflow-hidden"
             style={{
               background: 'rgba(6,10,20,0.97)',
               border: '1px solid rgba(0,212,255,0.2)',

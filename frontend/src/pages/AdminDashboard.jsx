@@ -12,6 +12,7 @@ import {
 import { format } from 'date-fns'
 import AdminChat from '../components/chat/AdminChat'
 import { RiMessage3Line } from 'react-icons/ri'
+import AIAssistant from '../components/ui/AIAssistant'
 const statusOptions = ['pending', 'under_review', 'in_progress', 'completed', 'delivered']
 const statusConfig = {
   pending: { label: 'Pending', cls: 'badge-pending' },
@@ -522,6 +523,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+      <AIAssistant />
     </div>
   )
 }

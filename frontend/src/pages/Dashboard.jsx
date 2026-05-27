@@ -6,7 +6,7 @@ import { RiProjectorLine, RiCheckLine, RiTimeLine, RiBellLine, RiMenuLine } from
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import PrintCard from '../components/dashboard/PrintCard'
-
+import AIAssistant from '../components/ui/AIAssistant'
 const statusConfig = {
   pending: { label: 'Pending', cls: 'badge-pending' },
   under_review: { label: 'Under Review', cls: 'badge-review' },
@@ -262,6 +262,7 @@ export default function Dashboard() {
           </motion.div>
         )}
       </main>
+      <AIAssistant />
     </div>
   )
 }
