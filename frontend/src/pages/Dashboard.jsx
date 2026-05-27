@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import PrintCard from '../components/dashboard/PrintCard'
 import AIAssistant from '../components/ui/AIAssistant'
-import ChatWidget from '../components/dashboard/ChatWidget'
+import ChatWidget from '../components/chat/ChatWidget'
 const statusConfig = {
   pending: { label: 'Pending', cls: 'badge-pending' },
   under_review: { label: 'Under Review', cls: 'badge-review' },
