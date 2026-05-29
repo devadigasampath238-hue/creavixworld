@@ -24,14 +24,14 @@
 
     <!-- Service Worker -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(() => console.log('SW Registered'))
-            .catch((err) => console.log('SW Error:', err));
-        });
-      }
-    </script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/servicew.js')
+        .then(() => console.log('SW Registered'))
+        .catch((err) => console.log('SW Error:', err));
+    });
+  }
+</script>
 
     <script type="module" src="/src/main.jsx"></script>
   </body>

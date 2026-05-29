@@ -1,6 +1,7 @@
 {
   "name": "Creavix World",
   "short_name": "Creavix",
+  "description": "Building Ideas. Creating Impact.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#030508",
