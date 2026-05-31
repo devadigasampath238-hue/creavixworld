@@ -59,19 +59,18 @@ function AppRoutes() {
       />
 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="/auth/google/success" element={<GoogleSuccess />} />
-      </Routes>
-
+  <Route path="/" element={<Home />} />
+  <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+  <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+  <Route path="/verify-otp" element={<VerifyOTP />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/reset-password/:token" element={<ResetPassword />} />
+  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+  <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
+  <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+  <Route path="/auth/google/success" element={<GoogleSuccess />} />  {/* ✅ BEFORE * */}
+  <Route path="*" element={<Navigate to="/" replace />} />           {/* ✅ LAST */}
+     </Routes>
       {/* AI Assistant floats on every page */}
       <AIAssistant />
     </>
