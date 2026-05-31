@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.creavixworld.twa",
+    "sha256_cert_fingerprints": [
+      "88:D1:E4:1C:AA:BB:4A:E3:51:B2:71:EC:BF:11:5D:3A:83:DB:82:EF:DE:A7:63:9D:2C:0B:C0:ED:85:E1:2D:BF"
+    ]
+  }
+}]
