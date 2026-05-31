@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
-
+const passport = require('passport');
+const jwt = require('jsonwebtoken');
 const {
   signup, verifyOTP, resendOTP, login,
   getMe, updateProfile, forgotPassword, resetPassword,
@@ -46,5 +47,31 @@ router.get('/admin-id', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+const passport = require('passport');
+const jwt = require('jsonwebtoken');
+
+// Google OAuth - Start
+router.get('/google',
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false 
+  })
+);
+
+// Google OAuth - Callback
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    session: false, 
+    failureRedirect: `${process.env.FRONTEND_URL}/login` 
+  }),
+  async (req, res) => {
+    const token = jwt.sign(
+      { id: req.user._id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+    res.redirect(`${process.env.FRONTEND_URL}/auth/google/success?token=${token}`);
+  }
+);
 
 module.exports = router;

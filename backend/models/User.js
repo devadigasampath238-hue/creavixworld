@@ -45,6 +45,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  googleId: {
+  type: String,
+  default: null
+},
+avatar: {
+  type: String,
+  default: null
+},
   otp: String,
   otpExpires: Date,
   resetPasswordToken: String,

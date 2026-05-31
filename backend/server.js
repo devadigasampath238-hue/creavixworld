@@ -15,6 +15,10 @@ const connectDB = require('./config/database');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const User = require('./models/User');
 const ChatMessage = require('./models/Chat');
+const passport = require('passport');
+require('./config/passport');
+
+;
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -72,6 +76,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(mongoSanitize());
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(passport.initialize());
 
 app.get('/', (req, res) => {
   res.json({

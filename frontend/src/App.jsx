@@ -14,6 +14,7 @@ import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SubmitProject from './pages/SubmitProject'
+import GoogleSuccess from './pages/GoogleSuccess';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
@@ -68,6 +69,7 @@ function AppRoutes() {
         <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/auth/google/success" element={<GoogleSuccess />} />
       </Routes>
 
       {/* AI Assistant floats on every page */}
