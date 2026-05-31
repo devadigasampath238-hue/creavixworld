@@ -37,7 +37,7 @@ router.put('/profile', protect, updateProfile);
 router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/reset-password', authLimiter, resetPassword);
 
-// GET /api/auth/admin-id — returns admin ID for chat
+// GET /api/auth/admin-id
 router.get('/admin-id', async (req, res) => {
   try {
     const admin = await User.findOne({ role: 'admin' }).select('_id name');
@@ -47,8 +47,6 @@ router.get('/admin-id', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-const passport = require('passport');
-const jwt = require('jsonwebtoken');
 
 // Google OAuth - Start
 router.get('/google',
