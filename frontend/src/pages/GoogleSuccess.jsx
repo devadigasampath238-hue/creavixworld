@@ -1,20 +1,21 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const GoogleSuccess = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const { loginWithToken } = useAuth()
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
 
     if (token) {
-      localStorage.setItem('token', token);
-      navigate('/dashboard');
+      loginWithToken(token)
     } else {
-      navigate('/login');
+      navigate('/login')
     }
-  }, []);
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#030508]">
@@ -23,7 +24,7 @@ const GoogleSuccess = () => {
         <p className="text-[#00d4ff] text-xl font-orbitron">Logging in with Google...</p>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default GoogleSuccess;
+export default GoogleSuccess

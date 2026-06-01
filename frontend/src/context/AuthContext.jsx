@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 const AuthContext = createContext(null)
@@ -17,6 +18,7 @@ api.interceptors.request.use((config) => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const token = localStorage.getItem('creavix_token')
@@ -64,8 +66,26 @@ export function AuthProvider({ children }) {
     return res.data
   }
 
+  const loginWithToken = async (token) => {
+    localStorage.setItem('creavix_token', token)
+    try {
+      const res = await api.get('/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setUser(res.data.user)
+      navigate(res.data.user.role === 'admin' ? '/admin' : '/dashboard')
+    } catch {
+      localStorage.removeItem('creavix_token')
+      navigate('/login')
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, verifyOTP, logout, forgotPassword, resetPassword, api }}>
+    <AuthContext.Provider value={{ 
+      user, loading, login, signup, verifyOTP, 
+      logout, forgotPassword, resetPassword, 
+      loginWithToken, api 
+    }}>
       {children}
     </AuthContext.Provider>
   )
@@ -78,4 +98,3 @@ export const useAuth = () => {
 }
 
 export { api }
-
