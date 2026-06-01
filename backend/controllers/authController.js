@@ -7,6 +7,7 @@ const {
   sendWelcomeEmail,
   sendPasswordResetEmail,
 } = require('../utils/email');
+const { sendOTPSMS } = require('../utils/sms');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -32,10 +33,34 @@ const sendTokenResponse = (user, statusCode, res) => {
   });
 };
 
+// Helper to send OTP via SMS with email fallback
+const sendOTP = async (phone, email, name, otp) => {
+  // Try SMS first
+  if (phone) {
+    try {
+      await sendOTPSMS(phone, otp);
+      console.log(`✅ OTP sent via SMS to ${phone}`);
+      return 'sms';
+    } catch (smsErr) {
+      console.warn('⚠ SMS failed, trying email:', smsErr.message);
+    }
+  }
+  // Fallback to email
+  try {
+    await sendOTPEmail(email, name, otp);
+    console.log(`✅ OTP sent via email to ${email}`);
+    return 'email';
+  } catch (emailErr) {
+    console.warn('⚠ Email not sent (network issue). Using terminal OTP.');
+    console.log(`\n🔐 OTP for ${email}: ${otp}\n`);
+    return 'terminal';
+  }
+};
+
 // ─── @route  POST /api/auth/signup ──────────────────────────────────────────
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -46,18 +71,16 @@ const signup = async (req, res) => {
       const otp = generateOTP();
       existingUser.otp = otp;
       existingUser.otpExpires = Date.now() + 10 * 60 * 1000;
+      if (phone) existingUser.phone = phone;
       await existingUser.save();
 
-      try {
-        await sendOTPEmail(email, existingUser.name, otp);
-      } catch (emailErr) {
-        console.warn('⚠  Email not sent (network issue). Using terminal OTP.');
-        console.log(`\n🔐 OTP for ${email}: ${otp}\n`);
-      }
+      const method = await sendOTP(existingUser.phone, email, existingUser.name, otp);
 
       return res.status(200).json({
         success: true,
-        message: 'OTP resent to your email.',
+        message: method === 'sms'
+          ? 'OTP resent to your mobile number.'
+          : 'OTP resent to your email.',
       });
     }
 
@@ -68,21 +91,19 @@ const signup = async (req, res) => {
       name,
       email,
       password,
+      phone,
       otp,
       otpExpires,
       isVerified: false,
     });
 
-    try {
-      await sendOTPEmail(email, name, otp);
-    } catch (emailErr) {
-      console.warn('⚠  Email not sent (network issue). Using terminal OTP.');
-      console.log(`\n🔐 OTP for ${email}: ${otp}\n`);
-    }
+    const method = await sendOTP(phone, email, name, otp);
 
     res.status(201).json({
       success: true,
-      message: 'Account created. Please verify your email with the OTP sent.',
+      message: method === 'sms'
+        ? 'Account created. Please verify with the OTP sent to your mobile.'
+        : 'Account created. Please verify your email with the OTP sent.',
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -158,14 +179,14 @@ const resendOTP = async (req, res) => {
     user.otpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    try {
-      await sendOTPEmail(email, user.name, otp);
-    } catch (emailErr) {
-      console.warn('⚠  Email not sent (network issue). Using terminal OTP.');
-      console.log(`\n🔐 OTP for ${email}: ${otp}\n`);
-    }
+    const method = await sendOTP(user.phone, email, user.name, otp);
 
-    res.status(200).json({ success: true, message: 'New OTP sent to your email.' });
+    res.status(200).json({
+      success: true,
+      message: method === 'sms'
+        ? 'New OTP sent to your mobile number.'
+        : 'New OTP sent to your email.',
+    });
   } catch (err) {
     console.error('ResendOTP error:', err);
     res.status(500).json({ success: false, message: 'Server error during OTP resend.' });
@@ -194,7 +215,7 @@ const login = async (req, res) => {
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
-        message: 'Please verify your email before logging in.',
+        message: 'Please verify your account before logging in.',
       });
     }
 
@@ -271,7 +292,6 @@ const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      // Don't reveal if email exists
       return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
     }
 
@@ -279,7 +299,7 @@ const forgotPassword = async (req, res) => {
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
     await user.save();
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
