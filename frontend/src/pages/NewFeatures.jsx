@@ -258,7 +258,6 @@ export default function NewFeatures() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map((f, i) => {
             const Icon = f.icon
-            const isActive = activeDemo === i
             return (
               <motion.div
                 key={f.title}
