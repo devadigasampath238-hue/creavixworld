@@ -110,7 +110,23 @@ const signup = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during signup.' });
   }
 };
+const { name, email, password, phone, adminCode } = req.body
 
+// Check if admin code provided
+const role = adminCode && adminCode === process.env.ADMIN_SECRET_CODE 
+  ? 'admin' 
+  : 'user'
+
+const user = await User.create({
+  name,
+  email,
+  password,
+  phone,
+  role,        // ✅ admin or user
+  otp,
+  otpExpires,
+  isVerified: false,
+})
 // ─── @route  POST /api/auth/verify-otp ──────────────────────────────────────
 const verifyOTP = async (req, res) => {
   try {

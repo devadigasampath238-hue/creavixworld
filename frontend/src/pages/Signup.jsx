@@ -17,9 +17,14 @@ export default function Signup() {
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      // Format phone with +91 if not already included
       const phone = data.phone.startsWith('+') ? data.phone : `+91${data.phone}`
-      await signup({ name: data.name, email: data.email, password: data.password, phone })
+      await signup({ 
+        name: data.name, 
+        email: data.email, 
+        password: data.password, 
+        phone,
+        adminCode: data.adminCode || ''
+      })
       toast.success('OTP sent to your mobile number!')
       navigate('/verify-otp', { state: { email: data.email, phone: data.phone } })
     } catch (err) {
@@ -119,6 +124,22 @@ export default function Signup() {
             />
           </div>
           {errors.confirm && <p className="text-neon-pink text-xs mt-1">{errors.confirm.message}</p>}
+        </div>
+
+        {/* Admin Code */}
+        <div>
+          <label className="font-body text-xs text-slate-400 tracking-wider uppercase block mb-2">
+            Admin Code <span className="text-slate-600">(Optional)</span>
+          </label>
+          <div className="relative">
+            <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-purple/60 z-10 pointer-events-none" size={16} />
+            <input
+              {...register('adminCode')}
+              type="password"
+              placeholder="Enter admin code if you have one"
+              className="cyber-input pl-11"
+            />
+          </div>
         </div>
 
         <motion.button
