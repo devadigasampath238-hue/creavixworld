@@ -21,7 +21,7 @@ export default function Signup() {
       const phone = data.phone.startsWith('+') ? data.phone : `+91${data.phone}`
       await signup({ name: data.name, email: data.email, password: data.password, phone })
       toast.success('OTP sent to your mobile number!')
-      navigate('/verify-otp', { state: { email: data.email } })
+      navigate('/verify-otp', { state: { email: data.email, phone: data.phone } })
     } catch (err) {
       toast.error(err.response?.data?.message || 'Signup failed')
     } finally {

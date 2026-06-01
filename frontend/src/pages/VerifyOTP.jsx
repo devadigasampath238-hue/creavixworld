@@ -15,6 +15,7 @@ export default function VerifyOTP() {
   const navigate = useNavigate()
   const location = useLocation()
   const email = location.state?.email || ''
+  const phone = location.state?.phone || ''
 
   const handleChange = (val, idx) => {
     if (!/^\d*$/.test(val)) return
@@ -34,7 +35,7 @@ export default function VerifyOTP() {
     setLoading(true)
     try {
       await verifyOTP(email, code)
-      toast.success('Email verified! Welcome aboard!')
+      toast.success('Account verified! Welcome aboard! 🚀')
       navigate('/dashboard')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Invalid OTP')
@@ -47,7 +48,7 @@ export default function VerifyOTP() {
     setResending(true)
     try {
       await api.post('/auth/resend-otp', { email })
-      toast.success('New OTP sent!')
+      toast.success('New OTP sent to your mobile!')
     } catch (err) {
       toast.error('Failed to resend OTP')
     } finally {
@@ -55,9 +56,18 @@ export default function VerifyOTP() {
     }
   }
 
+  // Show last 4 digits of phone or email
+  const maskedContact = phone
+    ? `+91 ******${phone.slice(-4)}`
+    : email
+
   return (
-    <AuthLayout title="Verify Email" subtitle={`Enter the 6-digit code sent to ${email}`}>
+    <AuthLayout
+      title="Verify Mobile"
+      subtitle={`Enter the 6-digit code sent to ${maskedContact}`}
+    >
       <div className="space-y-8">
+
         {/* OTP inputs */}
         <div className="flex gap-3 justify-center">
           {otp.map((digit, i) => (
@@ -86,12 +96,16 @@ export default function VerifyOTP() {
           whileTap={{ scale: 0.98 }}
           className="btn-glow w-full py-3 flex items-center justify-center"
         >
-          {loading ? <div className="cyber-loader w-5 h-5" /> : 'Verify Email'}
+          {loading ? <div className="cyber-loader w-5 h-5" /> : 'Verify OTP'}
         </motion.button>
 
         <p className="text-center font-body text-sm text-slate-400">
           Didn't receive it?{' '}
-          <button onClick={handleResend} disabled={resending} className="text-neon-blue hover:underline disabled:opacity-50">
+          <button
+            onClick={handleResend}
+            disabled={resending}
+            className="text-neon-blue hover:underline disabled:opacity-50"
+          >
             {resending ? 'Sending...' : 'Resend OTP'}
           </button>
         </p>
