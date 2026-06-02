@@ -16,6 +16,10 @@ import AdminDashboard from './pages/AdminDashboard'
 import SubmitProject from './pages/SubmitProject'
 import GoogleSuccess from './pages/GoogleSuccess';
 import NewFeatures from './pages/NewFeatures'
+import WebsiteAuditor from './pages/WebsiteAuditor'
+import CostCalculator from './pages/CostCalculator'
+import ROICalculator from './pages/ROICalculator'
+import ProposalGenerator from './pages/ProposalGenerator'
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
@@ -72,6 +76,10 @@ function AppRoutes() {
   <Route path="/auth/google/success" element={<GoogleSuccess />} />  {/* ✅ BEFORE * */}
   <Route path="*" element={<Navigate to="/" replace />} />           {/* ✅ LAST */}
   <Route path="/features" element={<NewFeatures />} />
+  <Route path="/auditor" element={<WebsiteAuditor />} />
+  <Route path="/cost-calculator" element={<CostCalculator />} />
+  <Route path="/roi-calculator" element={<ROICalculator />} />
+  <Route path="/proposal-generator" element={<ProposalGenerator />} />
      </Routes>
       {/* AI Assistant floats on every page */}
       <AIAssistant />
