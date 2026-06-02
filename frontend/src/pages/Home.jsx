@@ -10,14 +10,14 @@ import Testimonials from '../components/sections/Testimonials'
 import { FAQ, Contact } from '../components/sections/ContactFAQ'
 import AIAssistant from '../components/ui/AIAssistant'
 import WhatsAppButton from '../components/WhatsAppButton'
-import Testimonials from '../components/Testimonials'
-import Footer from '../components/Footer'
 import TrustSection from '../components/TrustSection'
 import ClientLogos from '../components/ClientLogos'
+
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-dark-900">
       <Navbar />
+
       <main className="relative z-10">
         <Hero />
         <Services />
@@ -25,17 +25,17 @@ export default function Home() {
         <AIDemo />
         <Portfolio />
         <Pricing />
+        <ClientLogos />
         <Testimonials />
+        <TrustSection />
         <FAQ />
         <Contact />
-        </main>
-       <Footer />
-       <TrustSection />
-       <ClientLogos />
-       <Testimonials />
-       <Footer />
-       <WhatsAppButton phone="919380916728" />
-      {/* AI Assistant - floats on all pages */}
+      </main>
+
+      <Footer />
+
+      <WhatsAppButton phone="919380916728" />
+
       <AIAssistant />
     </div>
   )
